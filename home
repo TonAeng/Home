@@ -32,6 +32,7 @@ class _HomePageState extends State<HomeScreen> {
   double PS_pro = 0.0;
   double PS_carb = 0.0;
   double PS_fat = 0.0;
+  int numberOfDates = 0;
 
   void initState() {
     super.initState();
@@ -58,6 +59,19 @@ class _HomePageState extends State<HomeScreen> {
     DateTime currentDateWithoutTime =
         DateTime(currentDate.year, currentDate.month, currentDate.day);
 
+    QuerySnapshot querySnapshotA =
+        await targets.where('phone', isEqualTo: userRef).get();
+
+    if (querySnapshotA.docs.isNotEmpty) {
+      numberOfDates = querySnapshotA.docs.where((doc) {
+        final data =
+            doc.data() as Map<String, dynamic>?; // Cast to the expected type
+        return data != null && data.containsKey('date');
+      }).length;
+    } else {
+      print('No target data found for the specified date.');
+    }
+
     QuerySnapshot querySnapshot = await targets
         .where('phone', isEqualTo: userRef)
         .where('date', isEqualTo: currentDateWithoutTime)
@@ -75,6 +89,7 @@ class _HomePageState extends State<HomeScreen> {
     } else {
       print('No target data found for the specified date.');
     }
+
     CollectionReference result =
         FirebaseFirestore.instance.collection('result');
 
@@ -216,22 +231,32 @@ class _HomePageState extends State<HomeScreen> {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_back),
-                      onPressed: () {
-                        DateTime currentDate = DateTime.now();
-                        DateTime selectedDate = currentDate
-                            .subtract(Duration(days: 1)); // ลดวันที่ 1 วัน
-                        _navigateToDatePage(context, selectedDate);
-                      },
-                    ),
-                    Text(
-                      DateFormat('dd MMMM').format(DateTime.now()),
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(width: 48), // สำหรับเว้นช่องว่างเทียบเท่ากับไอคอน
+                  children: <Widget>[
+                    if (numberOfDates != 1) ...[
+                      IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: () {
+                          DateTime currentDate = DateTime.now();
+                          DateTime selectedDate =
+                              currentDate.subtract(Duration(days: 1));
+                          _navigateToDatePage(context, selectedDate);
+                        },
+                      ),
+                      Text(
+                        DateFormat('dd MMMM').format(DateTime.now()),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 48)
+                    ] else ...[
+                      SizedBox(width: 48),
+                      Text(
+                        DateFormat('dd MMMM').format(DateTime.now()),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 48) // สำหรับเว้นช่องว่างเทียบเท่ากับไอคอน
+                    ],
                   ],
                 ),
                 Text(
