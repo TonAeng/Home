@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#2E7D5B">
+</head>
+<body>
+<title>ตารางวินัยประจำวัน</title>
+<style>
+  :root{
+    --bg:#F5F4EE; --surface:#FFFFFF; --surface2:#EDECe3;
+    --ink:#212820; --muted:#6C7367; --line:#DDDCD0;
+    --accent:#2E7D5B; --accent-ink:#FFFFFF; --accent-soft:#E2EFE8;
+    --now:#C77800; --now-soft:#F9EEDC;
+    --danger:#B3402E; --danger-soft:#F5E3DF;
+    --ring-track:#E3E2D7;
+    --shadow:0 1px 3px rgba(33,40,32,.08);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#11150F; --surface:#1B211A; --surface2:#232B22;
+      --ink:#E8EBE3; --muted:#98A092; --line:#2E3630;
+      --accent:#5FBF8F; --accent-ink:#0E1510; --accent-soft:#1F3329;
+      --now:#E3A03B; --now-soft:#332A18;
+      --danger:#E07B67; --danger-soft:#3A241F;
+      --ring-track:#2A3129;
+      --shadow:0 1px 3px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#F5F4EE; --surface:#FFFFFF; --surface2:#EDECE3;
+    --ink:#212820; --muted:#6C7367; --line:#DDDCD0;
+    --accent:#2E7D5B; --accent-ink:#FFFFFF; --accent-soft:#E2EFE8;
+    --now:#C77800; --now-soft:#F9EEDC;
+    --danger:#B3402E; --danger-soft:#F5E3DF;
+    --ring-track:#E3E2D7;
+    --shadow:0 1px 3px rgba(33,40,32,.08);
+  }
+  :root[data-theme="dark"]{
+    --bg:#11150F; --surface:#1B211A; --surface2:#232B22;
+    --ink:#E8EBE3; --muted:#98A092; --line:#2E3630;
+    --accent:#5FBF8F; --accent-ink:#0E1510; --accent-soft:#1F3329;
+    --now:#E3A03B; --now-soft:#332A18;
+    --danger:#E07B67; --danger-soft:#3A241F;
+    --ring-track:#2A3129;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Thai", "Thonburi", sans-serif;
+    font-size:16px; line-height:1.5;
+    min-height:100dvh;
+  }
+  button{font-family:inherit; font-size:inherit; color:inherit; background:none; border:none; padding:0; cursor:pointer}
+  input,select{font-family:inherit; font-size:inherit; color:inherit}
+
+  .app{max-width:480px; margin:0 auto; padding:0 16px 96px}
+
+  /* ---------- header ---------- */
+  header.top{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:20px 0 14px;
+  }
+  .eyebrow{font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:600}
+  h1.daytitle{margin:2px 0 0; font-size:24px; font-weight:800; letter-spacing:-.01em; text-wrap:balance}
+  .sub{color:var(--muted); font-size:14px; margin-top:2px}
+  .ringwrap{position:relative; width:64px; height:64px; flex:none}
+  .ringwrap svg{transform:rotate(-90deg)}
+  .ringwrap .pct{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:700; font-variant-numeric:tabular-nums;
+  }
+
+  /* ---------- alert banner ---------- */
+  .banner{
+    position:fixed; left:16px; right:16px; top:12px; z-index:50;
+    max-width:448px; margin:0 auto;
+    background:var(--now); color:#fff;
+    border-radius:14px; padding:14px 16px;
+    box-shadow:0 6px 24px rgba(0,0,0,.25);
+    display:none; align-items:center; gap:12px;
+  }
+  .banner.show{display:flex; animation:drop .35s ease}
+  @keyframes drop{from{transform:translateY(-80px); opacity:0} to{transform:none; opacity:1}}
+  @media (prefers-reduced-motion: reduce){ .banner.show{animation:none} }
+  .banner .b-time{font-weight:800; font-variant-numeric:tabular-nums; font-size:18px}
+  .banner .b-title{font-weight:600}
+  .banner .b-done{
+    margin-left:auto; flex:none; background:rgba(255,255,255,.22);
+    border-radius:10px; padding:8px 14px; font-weight:700; color:#fff;
+  }
+
+  /* ---------- timeline ---------- */
+  .list{display:flex; flex-direction:column; gap:0; margin-top:4px}
+  .item{
+    display:grid; grid-template-columns:64px 1fr; gap:0 0;
+    position:relative;
+  }
+  .t-rail{
+    position:relative; padding:14px 10px 14px 0; text-align:right;
+    font-variant-numeric:tabular-nums; font-weight:700; font-size:15px; color:var(--muted);
+  }
+  .t-rail::after{
+    content:""; position:absolute; top:0; bottom:0; right:-1px; width:2px; background:var(--line);
+  }
+  .t-rail::before{
+    content:""; position:absolute; right:-5px; top:22px; width:10px; height:10px; border-radius:50%;
+    background:var(--line); border:2px solid var(--bg);
+  }
+  .item.now .t-rail{color:var(--now)}
+  .item.now .t-rail::before{background:var(--now)}
+  .item.done .t-rail::before{background:var(--accent)}
+  .item.missed .t-rail{color:var(--danger)}
+  .item.missed .t-rail::before{background:var(--danger)}
+
+  .card{
+    margin:7px 0 7px 14px; padding:12px 14px;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:12px;
+    text-align:left; width:calc(100% - 14px);
+  }
+  .item.now .card{background:var(--now-soft); border-color:var(--now)}
+  .item.done .card{background:var(--surface2); border-color:transparent; box-shadow:none}
+  .checkbox{
+    flex:none; width:28px; height:28px; border-radius:50%;
+    border:2px solid var(--muted); display:flex; align-items:center; justify-content:center;
+  }
+  .item.done .checkbox{background:var(--accent); border-color:var(--accent)}
+  .checkbox svg{opacity:0; width:16px; height:16px}
+  .item.done .checkbox svg{opacity:1}
+  .c-title{font-weight:600; font-size:16px}
+  .item.done .c-title{color:var(--muted); text-decoration:line-through; text-decoration-thickness:1.5px}
+  .c-meta{font-size:13px; color:var(--muted); margin-top:1px}
+  .item.now .c-meta{color:var(--now); font-weight:600}
+  .item.missed .c-meta{color:var(--danger); font-weight:600}
+
+  .empty{
+    margin:40px 8px; text-align:center; color:var(--muted);
+  }
+  .empty strong{color:var(--ink)}
+
+  /* ---------- section / cards ---------- */
+  h2.sec{font-size:14px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); font-weight:700; margin:26px 2px 10px}
+  .panel{
+    background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    padding:16px; box-shadow:var(--shadow);
+  }
+  .panel + .panel{margin-top:12px}
+  .panel p{margin:6px 0 0; font-size:14px; color:var(--muted)}
+  .panel p:first-child{margin-top:0}
+  .panel .p-title{font-weight:700; color:var(--ink); font-size:16px; margin:0}
+
+  /* ---------- forms ---------- */
+  .field{margin-top:14px}
+  .field label{display:block; font-size:13px; font-weight:600; color:var(--muted); margin-bottom:6px}
+  .field input[type=text], .field input[type=time]{
+    width:100%; padding:12px; border-radius:12px; border:1px solid var(--line);
+    background:var(--bg); font-size:16px;
+  }
+  .field input:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent)}
+  .days{display:flex; gap:6px}
+  .days button{
+    flex:1; padding:9px 0; border-radius:10px; border:1px solid var(--line);
+    font-size:14px; font-weight:600; color:var(--muted); background:var(--bg);
+  }
+  .days button.on{background:var(--accent); border-color:var(--accent); color:var(--accent-ink)}
+  .btn{
+    display:block; width:100%; text-align:center;
+    padding:13px; border-radius:12px; font-weight:700; font-size:16px;
+    background:var(--accent); color:var(--accent-ink); margin-top:16px;
+  }
+  .btn.ghost{background:var(--surface2); color:var(--ink); font-weight:600}
+  .btn.small{padding:10px; font-size:15px; margin-top:10px}
+  .btn:active{opacity:.85}
+  .btnrow{display:flex; gap:10px}
+  .btnrow .btn{flex:1}
+
+  /* ---------- manage list ---------- */
+  .m-item{
+    display:flex; align-items:center; gap:12px; padding:12px 2px;
+    border-bottom:1px solid var(--line);
+  }
+  .m-item:last-child{border-bottom:none}
+  .m-time{font-variant-numeric:tabular-nums; font-weight:700; width:52px; flex:none}
+  .m-title{flex:1; font-weight:600}
+  .m-days{font-size:12px; color:var(--muted)}
+  .m-edit,.m-del{
+    flex:none; padding:8px 12px; border-radius:10px; font-size:14px; font-weight:600;
+  }
+  .m-edit{background:var(--surface2)}
+  .m-del{background:var(--danger-soft); color:var(--danger)}
+
+  /* ---------- stats ---------- */
+  .statrow{display:flex; gap:12px}
+  .stat{
+    flex:1; background:var(--surface); border:1px solid var(--line); border-radius:16px;
+    padding:14px; box-shadow:var(--shadow); text-align:center;
+  }
+  .stat .n{font-size:30px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--accent)}
+  .stat .l{font-size:13px; color:var(--muted); font-weight:600}
+  .bars{display:flex; align-items:flex-end; gap:5px; height:110px; margin-top:14px}
+  .barcol{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; height:100%; justify-content:flex-end}
+  .bar{width:100%; border-radius:5px 5px 2px 2px; background:var(--accent); min-height:3px}
+  .bar.zero{background:var(--ring-track)}
+  .bar.today{background:var(--now)}
+  .barlab{font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+
+  /* ---------- tabs ---------- */
+  nav.tabs{
+    position:fixed; bottom:0; left:0; right:0; z-index:40;
+    background:var(--surface); border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav.tabs .inner{max-width:480px; margin:0 auto; display:flex}
+  nav.tabs button{
+    flex:1; padding:11px 0 9px; display:flex; flex-direction:column; align-items:center; gap:3px;
+    font-size:11.5px; font-weight:600; color:var(--muted);
+  }
+  nav.tabs button.on{color:var(--accent)}
+  nav.tabs svg{width:23px; height:23px}
+  .view{display:none}
+  .view.on{display:block}
+  .hint{font-size:13px; color:var(--muted); margin:10px 2px 0}
+  .ok{color:var(--accent); font-weight:600}
+  .warn{color:var(--now); font-weight:600}
+</style>
+
+<div class="banner" id="banner" role="alert">
+  <span class="b-time" id="bTime"></span>
+  <span class="b-title" id="bTitle"></span>
+  <button class="b-done" id="bDone">ทำแล้ว ✓</button>
+</div>
+
+<div class="app">
+  <!-- ============ วันนี้ ============ -->
+  <section class="view on" id="view-today">
+    <header class="top">
+      <div>
+        <div class="eyebrow" id="todayEyebrow">วันนี้</div>
+        <h1 class="daytitle" id="todayDate">—</h1>
+        <div class="sub" id="todaySub">—</div>
+      </div>
+      <div class="ringwrap" aria-hidden="true">
+        <svg width="64" height="64" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="27" fill="none" stroke="var(--ring-track)" stroke-width="7"/>
+          <circle id="ringFg" cx="32" cy="32" r="27" fill="none" stroke="var(--accent)" stroke-width="7"
+                  stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="169.6"/>
+        </svg>
+        <div class="pct" id="ringPct">0%</div>
+      </div>
+    </header>
+    <div class="list" id="todayList"></div>
+    <div class="empty" id="todayEmpty" hidden>
+      <p><strong>ยังไม่มีตารางของวันนี้</strong></p>
+      <p>ไปที่แท็บ "จัดการ" เพื่อเพิ่มสิ่งที่ต้องทำ</p>
+    </div>
+  </section>
+
+  <!-- ============ จัดการ ============ -->
+  <section class="view" id="view-manage">
+    <header class="top"><div>
+      <div class="eyebrow">จัดการตาราง</div>
+      <h1 class="daytitle" id="formHead">เพิ่มสิ่งที่ต้องทำ</h1>
+    </div></header>
+
+    <div class="panel">
+      <div class="field">
+        <label for="fTitle">สิ่งที่ต้องทำ</label>
+        <input type="text" id="fTitle" placeholder="เช่น ออกกำลังกาย 30 นาที" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="fTime">เวลา</label>
+        <input type="time" id="fTime" value="07:00">
+      </div>
+      <div class="field">
+        <label>ทำวันไหนบ้าง</label>
+        <div class="days" id="fDays"></div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="fSave">บันทึก</button>
+        <button class="btn ghost" id="fCancel" hidden>ยกเลิก</button>
+      </div>
+    </div>
+
+    <h2 class="sec">รายการทั้งหมด</h2>
+    <div class="panel" id="manageList"></div>
+
+    <h2 class="sec">การแจ้งเตือน</h2>
+    <div class="panel">
+      <p class="p-title">ขณะเปิดแอป</p>
+      <p>เมื่อถึงเวลา แอปจะเด้งแถบเตือนพร้อมเสียงโดยอัตโนมัติ</p>
+      <button class="btn ghost small" id="testSound">ทดสอบเสียงเตือน</button>
+      <button class="btn ghost small" id="askNotif">เปิดการแจ้งเตือนของระบบ <span id="notifState"></span></button>
+    </div>
+    <div class="panel">
+      <p class="p-title">แจ้งเตือนแม้ปิดแอป (แนะนำสำหรับ iPhone)</p>
+      <p>ดาวน์โหลดไฟล์ปฏิทินแล้วกด "เพิ่มทั้งหมด" — iPhone จะแจ้งเตือนทุกวันตามเวลาในตาราง แม้ไม่ได้เปิดแอป</p>
+      <button class="btn small" id="icsBtn">เพิ่มการแจ้งเตือนลงปฏิทิน iPhone</button>
+      <p class="hint">ถ้าแก้ตารางภายหลัง ให้ลบชุดเดิมในแอปปฏิทินแล้วกดปุ่มนี้ใหม่</p>
+    </div>
+  </section>
+
+  <!-- ============ สถิติ ============ -->
+  <section class="view" id="view-stats">
+    <header class="top"><div>
+      <div class="eyebrow">ความสม่ำเสมอ</div>
+      <h1 class="daytitle">สถิติวินัยของคุณ</h1>
+    </div></header>
+    <div class="statrow">
+      <div class="stat"><div class="n" id="stStreak">0</div><div class="l">วันต่อเนื่อง 🔥</div></div>
+      <div class="stat"><div class="n" id="stDone">0</div><div class="l">ทำสำเร็จทั้งหมด</div></div>
+    </div>
+    <h2 class="sec">14 วันที่ผ่านมา (% สำเร็จ)</h2>
+    <div class="panel"><div class="bars" id="bars"></div></div>
+    <p class="hint">สตรีคจะนับเมื่อทำครบทุกรายการของวันนั้น — ทำให้ครบทุกวันเพื่อรักษาไฟไว้!</p>
+  </section>
+</div>
+
+<nav class="tabs"><div class="inner">
+  <button data-tab="today" class="on" aria-label="วันนี้">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+    วันนี้
+  </button>
+  <button data-tab="manage" aria-label="จัดการ">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    จัดการ
+  </button>
+  <button data-tab="stats" aria-label="สถิติ">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15v3M12 10v8M17 6v12"/></svg>
+    สถิติ
+  </button>
+</div></nav>
+
+<script>
+(function(){
+  "use strict";
+  var LS_TASKS="ds.tasks", LS_LOG="ds.log", LS_SEED="ds.seeded";
+  var THAI_DAYS=["อา","จ","อ","พ","พฤ","ศ","ส"];
+  var THAI_DAY_FULL=["อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัสบดี","ศุกร์","เสาร์"];
+  var THAI_MONTH=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  var ICS_DAY=["SU","MO","TU","WE","TH","FR","SA"];
+
+  function load(k,d){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } }
+  function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function dateKey(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+  function minutesOf(t){ var p=t.split(":"); return (+p[0])*60+(+p[1]); }
+
+  var tasks=load(LS_TASKS,null);
+  if(!tasks){
+    tasks = localStorage.getItem(LS_SEED) ? [] : [
+      {id:uid(),title:"ตื่นนอน ดื่มน้ำ 1 แก้ว",time:"06:30",days:[0,1,2,3,4,5,6]},
+      {id:uid(),title:"ออกกำลังกาย 30 นาที",time:"07:00",days:[1,2,3,4,5]},
+      {id:uid(),title:"อ่านหนังสือ 20 นาที",time:"20:00",days:[0,1,2,3,4,5,6]},
+      {id:uid(),title:"เข้านอนตรงเวลา",time:"22:30",days:[0,1,2,3,4,5,6]}
+    ];
+    save(LS_TASKS,tasks); localStorage.setItem(LS_SEED,"1");
+  }
+  var log=load(LS_LOG,{});   // { "2026-07-08": { taskId: true } }
+  var alerted={};            // in-memory: taskId ที่เด้งเตือนไปแล้ววันนี้
+  var editingId=null;
+  var formDays=[0,1,2,3,4,5,6];
+
+  /* ---------- helpers ---------- */
+  function todayTasks(d){
+    var dow=d.getDay();
+    return tasks.filter(function(t){return t.days.indexOf(dow)>=0;})
+                .sort(function(a,b){return minutesOf(a.time)-minutesOf(b.time);});
+  }
+  function isDone(dk,id){ return !!(log[dk]&&log[dk][id]); }
+  function setDone(dk,id,v){
+    if(!log[dk]) log[dk]={};
+    if(v) log[dk][id]=true; else delete log[dk][id];
+    save(LS_LOG,log);
+  }
+  function daysLabel(days){
+    if(days.length===7) return "ทุกวัน";
+    if(days.length===5&&days.indexOf(0)<0&&days.indexOf(6)<0) return "จันทร์–ศุกร์";
+    return days.slice().sort().map(function(d){return THAI_DAYS[d];}).join(" ");
+  }
+
+  /* ---------- เสียงเตือน ---------- */
+  var audioCtx=null;
+  function chime(){
+    try{
+      audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+      if(audioCtx.state==="suspended") audioCtx.resume();
+      [0,0.18,0.36].forEach(function(dt,i){
+        var o=audioCtx.createOscillator(), g=audioCtx.createGain();
+        o.type="sine"; o.frequency.value=[880,1108.7,1318.5][i];
+        g.gain.setValueAtTime(0.0001,audioCtx.currentTime+dt);
+        g.gain.exponentialRampToValueAtTime(0.35,audioCtx.currentTime+dt+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+dt+0.5);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(audioCtx.currentTime+dt); o.stop(audioCtx.currentTime+dt+0.55);
+      });
+    }catch(e){}
+    if(navigator.vibrate) navigator.vibrate([200,100,200]);
+  }
+
+  /* ---------- แถบเตือน ---------- */
+  var bannerTaskId=null;
+  function showBanner(task){
+    bannerTaskId=task.id;
+    document.getElementById("bTime").textContent=task.time;
+    document.getElementById("bTitle").textContent=task.title;
+    document.getElementById("banner").classList.add("show");
+    chime();
+    if(window.Notification&&Notification.permission==="granted"){
+      try{ new Notification("ถึงเวลา "+task.time+" แล้ว",{body:task.title,tag:task.id}); }catch(e){}
+    }
+  }
+  document.getElementById("bDone").addEventListener("click",function(){
+    if(bannerTaskId) setDone(dateKey(new Date()),bannerTaskId,true);
+    document.getElementById("banner").classList.remove("show");
+    renderToday(); renderStats();
+  });
+
+  /* ---------- ตรวจเวลา (ทุก 15 วิ) ---------- */
+  function tick(){
+    var now=new Date(), dk=dateKey(now), nowMin=now.getHours()*60+now.getMinutes();
+    todayTasks(now).forEach(function(t){
+      var m=minutesOf(t.time);
+      if(nowMin>=m && nowMin<m+1 && !isDone(dk,t.id) && !alerted[dk+t.id]){
+        alerted[dk+t.id]=true;
+        showBanner(t);
+      }
+    });
+    renderToday();
+  }
+  setInterval(tick,15000);
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden){ renderToday(); renderStats(); } });
+
+  /* ---------- render: วันนี้ ---------- */
+  function renderToday(){
+    var now=new Date(), dk=dateKey(now), nowMin=now.getHours()*60+now.getMinutes();
+    document.getElementById("todayDate").textContent="วัน"+THAI_DAY_FULL[now.getDay()]+"ที่ "+now.getDate()+" "+THAI_MONTH[now.getMonth()];
+    var list=todayTasks(now), doneCount=list.filter(function(t){return isDone(dk,t.id);}).length;
+    document.getElementById("todaySub").textContent=list.length?("ทำแล้ว "+doneCount+" จาก "+list.length+" รายการ"):"ยังไม่มีรายการ";
+    var pct=list.length?Math.round(doneCount/list.length*100):0;
+    document.getElementById("ringPct").textContent=pct+"%";
+    document.getElementById("ringFg").style.strokeDashoffset=String(169.6*(1-pct/100));
+
+    var wrap=document.getElementById("todayList"); wrap.innerHTML="";
+    document.getElementById("todayEmpty").hidden=list.length>0;
+    list.forEach(function(t){
+      var m=minutesOf(t.time), done=isDone(dk,t.id);
+      var state=done?"done":(nowMin>=m&&nowMin<m+60?"now":(nowMin>=m+60?"missed":"soon"));
+      var meta=done?"เสร็จแล้ว":(state==="now"?"ถึงเวลาแล้ว!":(state==="missed"?"เลยเวลามาแล้ว":"กำลังจะถึง"));
+      var item=document.createElement("div"); item.className="item "+state;
+      var rail=document.createElement("div"); rail.className="t-rail"; rail.textContent=t.time;
+      var card=document.createElement("button"); card.className="card";
+      card.setAttribute("aria-pressed",done?"true":"false");
+      card.innerHTML='<span class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg></span>'+
+        '<span><span class="c-title"></span><div class="c-meta"></div></span>';
+      card.querySelector(".c-title").textContent=t.title;
+      card.querySelector(".c-meta").textContent=meta;
+      card.addEventListener("click",function(){
+        setDone(dk,t.id,!done);
+        if(!done&&navigator.vibrate) navigator.vibrate(60);
+        renderToday(); renderStats();
+      });
+      item.appendChild(rail); item.appendChild(card); wrap.appendChild(item);
+    });
+  }
+
+  /* ---------- render: จัดการ ---------- */
+  function renderDayPicker(){
+    var box=document.getElementById("fDays"); box.innerHTML="";
+    THAI_DAYS.forEach(function(name,d){
+      var b=document.createElement("button"); b.type="button"; b.textContent=name;
+      if(formDays.indexOf(d)>=0) b.classList.add("on");
+      b.addEventListener("click",function(){
+        var i=formDays.indexOf(d);
+        if(i>=0) formDays.splice(i,1); else formDays.push(d);
+        renderDayPicker();
+      });
+      box.appendChild(b);
+    });
+  }
+  function resetForm(){
+    editingId=null; formDays=[0,1,2,3,4,5,6];
+    document.getElementById("fTitle").value="";
+    document.getElementById("fTime").value="07:00";
+    document.getElementById("formHead").textContent="เพิ่มสิ่งที่ต้องทำ";
+    document.getElementById("fSave").textContent="บันทึก";
+    document.getElementById("fCancel").hidden=true;
+    renderDayPicker();
+  }
+  document.getElementById("fSave").addEventListener("click",function(){
+    var title=document.getElementById("fTitle").value.trim();
+    var time=document.getElementById("fTime").value;
+    if(!title){ document.getElementById("fTitle").focus(); return; }
+    if(!time||!formDays.length) return;
+    if(editingId){
+      var t=tasks.find(function(x){return x.id===editingId;});
+      if(t){ t.title=title; t.time=time; t.days=formDays.slice(); }
+    }else{
+      tasks.push({id:uid(),title:title,time:time,days:formDays.slice()});
+    }
+    save(LS_TASKS,tasks);
+    resetForm(); renderManage(); renderToday(); renderStats();
+  });
+  document.getElementById("fCancel").addEventListener("click",resetForm);
+
+  function renderManage(){
+    var box=document.getElementById("manageList"); box.innerHTML="";
+    if(!tasks.length){ box.innerHTML='<p style="margin:0;color:var(--muted);font-size:14px">ยังไม่มีรายการ — เพิ่มด้านบนได้เลย</p>'; return; }
+    tasks.slice().sort(function(a,b){return minutesOf(a.time)-minutesOf(b.time);}).forEach(function(t){
+      var row=document.createElement("div"); row.className="m-item";
+      row.innerHTML='<span class="m-time"></span><span class="m-title"><span></span><div class="m-days"></div></span>'+
+        '<button class="m-edit">แก้ไข</button><button class="m-del">ลบ</button>';
+      row.querySelector(".m-time").textContent=t.time;
+      row.querySelector(".m-title > span").textContent=t.title;
+      row.querySelector(".m-days").textContent=daysLabel(t.days);
+      row.querySelector(".m-edit").addEventListener("click",function(){
+        editingId=t.id; formDays=t.days.slice();
+        document.getElementById("fTitle").value=t.title;
+        document.getElementById("fTime").value=t.time;
+        document.getElementById("formHead").textContent="แก้ไขรายการ";
+        document.getElementById("fSave").textContent="บันทึกการแก้ไข";
+        document.getElementById("fCancel").hidden=false;
+        renderDayPicker();
+        window.scrollTo({top:0,behavior:"smooth"});
+      });
+      row.querySelector(".m-del").addEventListener("click",function(){
+        if(!confirm('ลบ "'+t.title+'" ใช่ไหม?')) return;
+        tasks=tasks.filter(function(x){return x.id!==t.id;});
+        save(LS_TASKS,tasks);
+        if(editingId===t.id) resetForm();
+        renderManage(); renderToday(); renderStats();
+      });
+      box.appendChild(row);
+    });
+  }
+
+  /* ---------- การแจ้งเตือนระบบ ---------- */
+  function notifLabel(){
+    var el=document.getElementById("notifState");
+    if(!window.Notification){ el.textContent="(อุปกรณ์นี้ใช้เสียง+แถบเตือนในแอป)"; return; }
+    el.textContent=Notification.permission==="granted"?"✓ เปิดอยู่":(Notification.permission==="denied"?"(ถูกปิดไว้)":"");
+    if(Notification.permission==="granted") el.className="ok";
+  }
+  document.getElementById("askNotif").addEventListener("click",function(){
+    if(window.Notification&&Notification.permission!=="granted"){
+      Notification.requestPermission().then(notifLabel);
+    }
+    notifLabel();
+  });
+  document.getElementById("testSound").addEventListener("click",chime);
+
+  /* ---------- ไฟล์ปฏิทิน .ics ---------- */
+  function icsEscape(s){ return s.replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,"); }
+  document.getElementById("icsBtn").addEventListener("click",function(){
+    if(!tasks.length){ alert("ยังไม่มีรายการในตาราง"); return; }
+    var d=new Date(), y=d.getFullYear(), mo=String(d.getMonth()+1).padStart(2,"0"), da=String(d.getDate()).padStart(2,"0");
+    var lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//DailyDiscipline//TH","CALSCALE:GREGORIAN","X-WR-CALNAME:ตารางวินัยประจำวัน"];
+    tasks.forEach(function(t){
+      var hm=t.time.replace(":","");
+      var rrule=t.days.length===7?"RRULE:FREQ=DAILY":"RRULE:FREQ=WEEKLY;BYDAY="+t.days.map(function(x){return ICS_DAY[x];}).join(",");
+      lines.push("BEGIN:VEVENT","UID:"+t.id+"@daily-discipline",
+        "DTSTAMP:"+y+mo+da+"T000000Z",
+        "DTSTART:"+y+mo+da+"T"+hm+"00",
+        "DURATION:PT15M", rrule,
+        "SUMMARY:"+icsEscape(t.title),
+        "BEGIN:VALARM","ACTION:DISPLAY","TRIGGER:PT0S","DESCRIPTION:"+icsEscape(t.title),"END:VALARM",
+        "END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    var blob=new Blob([lines.join("\r\n")],{type:"text/calendar;charset=utf-8"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob); a.download="ตารางวินัย.ics";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },4000);
+  });
+
+  /* ---------- สถิติ ---------- */
+  function dayStats(d){
+    var dk=dateKey(d), list=todayTasks(d);
+    if(!list.length) return null;
+    var done=list.filter(function(t){return isDone(dk,t.id);}).length;
+    return {total:list.length,done:done,pct:Math.round(done/list.length*100)};
+  }
+  function renderStats(){
+    // สตรีค: นับถอยหลังจากวันนี้ (วันนี้ยังไม่ครบไม่ตัดไฟ — เริ่มนับจากเมื่อวานถ้าวันนี้ยังไม่จบ)
+    var streak=0, d=new Date();
+    var todayS=dayStats(d);
+    if(todayS&&todayS.done===todayS.total) streak++;
+    var back=new Date(d);
+    for(var i=0;i<3650;i++){
+      back.setDate(back.getDate()-1);
+      var s=dayStats(back);
+      if(s===null) continue;                    // วันไม่มีตาราง ไม่ตัดสตรีค
+      if(s.done===s.total&&s.total>0) streak++;
+      else break;
+    }
+    document.getElementById("stStreak").textContent=streak;
+    var total=0;
+    Object.keys(log).forEach(function(k){ total+=Object.keys(log[k]).length; });
+    document.getElementById("stDone").textContent=total;
+
+    var bars=document.getElementById("bars"); bars.innerHTML="";
+    for(var j=13;j>=0;j--){
+      var day=new Date(); day.setDate(day.getDate()-j);
+      var st=dayStats(day), pct=st?st.pct:0;
+      var col=document.createElement("div"); col.className="barcol";
+      var bar=document.createElement("div"); bar.className="bar"+(pct===0?" zero":"")+(j===0?" today":"");
+      bar.style.height=Math.max(3,pct)+"%";
+      bar.title=dateKey(day)+" — "+pct+"%";
+      var lab=document.createElement("div"); lab.className="barlab"; lab.textContent=day.getDate();
+      col.appendChild(bar); col.appendChild(lab); bars.appendChild(col);
+    }
+  }
+
+  /* ---------- แท็บ ---------- */
+  document.querySelectorAll("nav.tabs button").forEach(function(b){
+    b.addEventListener("click",function(){
+      document.querySelectorAll("nav.tabs button").forEach(function(x){x.classList.remove("on");});
+      document.querySelectorAll(".view").forEach(function(x){x.classList.remove("on");});
+      b.classList.add("on");
+      document.getElementById("view-"+b.dataset.tab).classList.add("on");
+      if(b.dataset.tab==="stats") renderStats();
+    });
+  });
+
+  /* ---------- start ---------- */
+  renderDayPicker(); renderManage(); renderToday(); renderStats(); notifLabel(); tick();
+})();
+</script>
+
+</body>
+</html>
