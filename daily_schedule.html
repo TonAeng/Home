@@ -300,9 +300,9 @@
     </div>
     <div class="panel">
       <p class="p-title">แจ้งเตือนแม้ปิดแอป (แนะนำสำหรับ iPhone)</p>
-      <p>ดาวน์โหลดไฟล์ปฏิทินแล้วกด "เพิ่มทั้งหมด" — iPhone จะแจ้งเตือนทุกวันตามเวลาในตาราง แม้ไม่ได้เปิดแอป</p>
+      <p>กดปุ่มด้านล่างแล้วเลือกเปิดด้วยแอป "ปฏิทิน" (Calendar) จากนั้นกด "เพิ่มทั้งหมด" — iPhone จะแจ้งเตือนทุกวันตามเวลาในตาราง แม้ไม่ได้เปิดแอป</p>
       <button class="btn small" id="icsBtn">เพิ่มการแจ้งเตือนลงปฏิทิน iPhone</button>
-      <p class="hint">ถ้าแก้ตารางภายหลัง ให้ลบชุดเดิมในแอปปฏิทินแล้วกดปุ่มนี้ใหม่</p>
+      <p class="hint">ต้องเปิดแอปนี้ใน Safari ปุ่มนี้ถึงจะทำงาน (ในแอปอื่นไฟล์จะถูกบล็อก) • ถ้าแก้ตารางภายหลัง ให้ลบชุดเดิมในแอปปฏิทินแล้วกดปุ่มนี้ใหม่</p>
     </div>
   </section>
 
@@ -574,10 +574,21 @@
     });
     lines.push("END:VCALENDAR");
     var blob=new Blob([lines.join("\r\n")],{type:"text/calendar;charset=utf-8"});
-    var a=document.createElement("a");
-    a.href=URL.createObjectURL(blob); a.download="ตารางวินัย.ics";
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },4000);
+    function downloadBlob(){
+      var a=document.createElement("a");
+      a.href=URL.createObjectURL(blob); a.download="daily-schedule.ics";
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },4000);
+    }
+    var file=null;
+    try{ file=new File([blob],"daily-schedule.ics",{type:"text/calendar"}); }catch(e){}
+    if(file&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:"ตารางวินัยประจำวัน"}).catch(function(err){
+        if(err&&err.name!=="AbortError") downloadBlob();
+      });
+    }else{
+      downloadBlob();
+    }
   });
 
   /* ---------- สถิติ ---------- */
