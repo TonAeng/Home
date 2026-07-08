@@ -1,0 +1,15 @@
+{
+  "name": "ตารางวินัยประจำวัน",
+  "short_name": "ตารางวินัย",
+  "description": "ตารางเวลาประจำวัน พร้อมแจ้งเตือนและเช็คลิสต์ เพื่อสร้างวินัยให้ตัวเอง",
+  "lang": "th",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F4EE",
+  "theme_color": "#2E7D5B",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
